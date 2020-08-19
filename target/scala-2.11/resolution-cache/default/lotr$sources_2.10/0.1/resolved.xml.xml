@@ -4,7 +4,7 @@
 		module="lotr$sources_2.10"
 		revision="0.1"
 		status="integration"
-		publication="20200421104031"
+		publication="20200819161740"
 	/>
 	<configurations>
 		<conf name="default" visibility="public" description=""/>

@@ -84,6 +84,8 @@ object HelloWorld {
 
     //TF
     val documents = sentPlusList.withColumn("id", monotonically_increasing_id());
+    documents.show(10);
+
 
     val columns = documents.columns.map(col) :+
       (explode(col("characters")) as "token")
@@ -93,7 +95,7 @@ object HelloWorld {
     val tokensWithTf =
       unfoldedDocs.groupBy("id", "token")
         .agg(count("characters") as "tf");
-    tokensWithTf.show(10)
+    //tokensWithTf.show(10)
 
     //look for an ID on a column: regex ((\|([\s])+ID\|) [\s]+)
 
@@ -108,13 +110,30 @@ object HelloWorld {
     val calcIdfUdf = udf { df:Int => calcIdf(dNorm, df toDouble) }
 
     val withIdf = tokensWithDf.withColumn("idf", calcIdfUdf(col("df")))
-    withIdf.show(10)
+    //withIdf.show(10)
 
     //TF+IDF
-    tokensWithTf
+    val tfidfs = tokensWithTf
       .join(withIdf, Seq("token"), "left")
       .withColumn("tf_idf", $"tf" * $"idf")
-      .show(10)
+
+    tfidfs.show(10)
+
+    //TFIDF + SENTIMENT
+
+    val temp = tfidfs
+      .join(documents, Seq("id"), "left")
+      .withColumn("tf_idf_sent", $"tf_idf" * $"sentiment")
+
+    temp.show(10)
+
+    //SUM UP
+    temp
+      .select($"token" as("character"), $"tf_idf_sent")
+      .groupBy("character")
+      .agg(sum("tf_idf_sent") as "overall goodness")
+      .sort($"overall goodness")
+      .show()
 
   }
 
