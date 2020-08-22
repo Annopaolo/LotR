@@ -1,5 +1,5 @@
 import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
-import org.apache.spark.sql.{SparkSession}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.functions._
 
 
@@ -57,59 +57,108 @@ object HelloWorld {
       .select($"words" as("characters"), $"sentiment")
       .filter(size($"characters") > 0);
 
-    //START TF-IDF
-    //TF
-    val documents = sentPlusList.withColumn("id", monotonically_increasing_id());
 
-    val columns = documents.columns.map(col) :+
-      (explode(col("characters")) as "token")
+    val rddAnalysis = {
+      //sentPlusList.show();
+      val rdd = sentPlusList.rdd;
+      val rdd2 = rdd.zipWithUniqueId().cache()
+      //rdd2.take(10).foreach(println)
 
-    val unfoldedDocs = documents.select(columns: _*).cache();
 
-    val tokensWithTf =
-      unfoldedDocs
-        .groupBy("id", "token")
-        .agg(count("characters") as "tf");
+      val toDf = rdd2.map(row => row match {
+        case (wrapped, index) => {
+          wrapped
+        }
+      })
 
-    //look for an ID on a column: regex ((\|([\s])+ID\|) [\s]+)
 
-    //IDF
-    val tokensWithDf =
-      unfoldedDocs
-        .groupBy("token")
-        .agg(countDistinct("id") as "df")
+      //toDf.take(10).foreach(println);
+      //toDf.take(1).foreach(row => println(row.schema))
 
-    val dNorm = tokensWithDf.count().toInt
-    println(s"${dNorm} documents");
+      //def rowToSensedThing : Row =>
 
-    val calcIdfUdf = udf { df:Int => Utils.calcIdf(dNorm, df toDouble) }
+      def explodeCharactersArray: (Seq[String], Int) => List[(String, Int)] = (chars, idx) => {
+        chars.map(name => (name, idx)).toList
+      }
+      //toDf.flatMap(explodeCharactersArray);
+    }
 
-    val withIdf = tokensWithDf.withColumn("idf", calcIdfUdf(col("df")))
-    //withIdf.show(10)
+    def dataframeAnalysis = {
+      //START TF-IDF
+      //TF
+      val documents = sentPlusList.withColumn("id", monotonically_increasing_id());
 
-    //TF+IDF
-    val tfidfs = tokensWithTf
-      .join(withIdf, Seq("token"), "left")
-      .withColumn("tf_idf", $"tf" * $"idf")
+      val columns = documents.columns.map(col) :+
+        (explode(col("characters")) as "token")
 
-    //tfidfs.show(10)
+      val unfoldedDocs = documents.select(columns: _*).cache();
 
-    //TFIDF*SENTIMENT
+      val tokensWithTf =
+        unfoldedDocs
+          .groupBy("id", "token")
+          .agg(count("characters") as "tf");
 
-    val temp = tfidfs
-      .join(documents, Seq("id"), "left")
-      //TODO: check if jointType = left is ok
-      .withColumn("tf_idf_sent", $"tf_idf" * $"sentiment")
+      println(" Frodo words: " + tokensWithTf.select($"token", $"tf").where($"token" like("Frodo")).agg(sum($"tf")).first().get(0));
 
-    //temp.show(10)
+      //look for an ID on a column: regex ((\|([\s])+ID\|) [\s]+)
 
-    //SUM UP
-    temp
-      .select($"token" as("character"), $"tf_idf_sent")
-      .groupBy("character")
-      .agg(sum("tf_idf_sent") as "overall goodness")
-      .sort($"overall goodness")
-      .show()
+      //IDF
+      val tokensWithDf =
+        unfoldedDocs
+          .groupBy("token")
+          .agg(countDistinct("id") as "df")
+
+      tokensWithDf.show(truncate = false);
+
+      val dNorm = documents.count().toInt
+      println(s"${dNorm} documents");
+
+      val calcIdfUdf = udf { df: Long => Utils.calcIdf(dNorm, df toDouble) }
+
+      val withIdf = tokensWithDf.withColumn("idf", calcIdfUdf(col("df")))
+      //withIdf.show(10)
+
+
+      println("Frodo words * sent: "+  tokensWithTf
+        .join(documents, Seq("id"))
+        .withColumn("tf_sent", $"tf" * $"sentiment")
+        .select($"token", $"tf_sent")
+        .where($"token" like("Frodo"))
+        .agg(sum($"tf_sent")).first().get(0))
+
+
+      //TF+IDF
+      val tfidfs = tokensWithTf
+        .join(withIdf, Seq("token")/*, "left"*/)
+        .withColumn("tf_idf", $"tf" * $"idf")
+
+      tfidfs.select($"token" as ("character"), $"tf_idf")
+        .groupBy("character")
+        .agg(sum("tf_idf") as "tf_idf")
+        .sort($"tf_idf")
+        .show()
+
+      //tfidfs.show(10)
+
+      //TFIDF*SENTIMENT
+
+      val temp = tfidfs
+        .join(documents, Seq("id")/*, "left"*/)
+        //TODO: check if jointType = left is ok
+        .withColumn("tf_idf_sent", $"tf_idf" * $"sentiment")
+
+      //temp.show(10)
+
+      //SUM UP
+      temp
+        .select($"token" as ("character"), $"tf_idf_sent")
+        .groupBy("character")
+        .agg(sum("tf_idf_sent") as "overall goodness")
+        .sort($"overall goodness")
+        .show()
+    }
+
+    dataframeAnalysis
 
   }
 }
