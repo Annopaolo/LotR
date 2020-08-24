@@ -1,13 +1,32 @@
 import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions.{arrays_zip, col, explode}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{arrays_zip, explode}
 import scala.collection.immutable.{Map => IMap}
 import scala.collection.mutable.Map
 
 object RDDAnalysis {
 
-  val names = Seq("Galadriel", "Bilbo", "Frodo", "Sam", "Gandalf", "Aragorn", "Legolas", "Gimli", "Gollum", "Bombadil")
+  val names = Seq(
+    "Galadriel",
+    "Bilbo",
+    "Frodo",
+    "Sam",
+    "Gandalf",
+    "Aragorn",
+    "Legolas",
+    "Gimli",
+    "Gollum",
+    "Bombadil",
+    "Smeagol",
+    "Sauron",
+    "Saruman",
+    "Merry",
+    "Pippin",
+    "Boromir",
+    "Faramir",
+    "Treebeard",
+    "Elrond"
+  )
 
   def main(args: Array[String]): Unit = {
     val spark: SparkSession = SparkSession

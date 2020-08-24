@@ -5,7 +5,27 @@ import org.apache.spark.sql.functions._
 
 object HelloWorld {
 
-  val names = Seq("Galadriel", "Bilbo", "Frodo", "Sam", "Gandalf", "Aragorn", "Legolas", "Gimli", "Gollum", "Bombadil", "Smeagol")
+  val names = Seq(
+                  "Galadriel",
+                  "Bilbo",
+                  "Frodo",
+                  "Sam",
+                  "Gandalf",
+                  "Aragorn",
+                  "Legolas",
+                  "Gimli",
+                  "Gollum",
+                  "Bombadil",
+                  "Smeagol",
+                  "Sauron",
+                  "Saruman",
+                  "Merry",
+                  "Pippin",
+                  "Boromir",
+                  "Faramir",
+                  "Treebeard",
+                  "Elrond"
+  )
 
   def main(args: Array[String]): Unit = {
     val spark: SparkSession = SparkSession
@@ -43,7 +63,7 @@ object HelloWorld {
         $"r.sentence" as("sentence"))
 
     //phr.show(10)
-    //TODO: from now on, the code should not use dataframes
+    //TODO: the user chooses which kind of analysis
 
     val udfSentToInt = udf(Utils.sentToInt)
 
@@ -56,32 +76,6 @@ object HelloWorld {
     val sentPlusList = end.withColumn("words", wordList($"sentence"))
       .select($"words" as("characters"), $"sentiment")
       .filter(size($"characters") > 0);
-
-
-    val rddAnalysis = {
-      //sentPlusList.show();
-      val rdd = sentPlusList.rdd;
-      val rdd2 = rdd.zipWithUniqueId().cache()
-      //rdd2.take(10).foreach(println)
-
-
-      val toDf = rdd2.map(row => row match {
-        case (wrapped, index) => {
-          wrapped
-        }
-      })
-
-
-      //toDf.take(10).foreach(println);
-      //toDf.take(1).foreach(row => println(row.schema))
-
-      //def rowToSensedThing : Row =>
-
-      def explodeCharactersArray: (Seq[String], Int) => List[(String, Int)] = (chars, idx) => {
-        chars.map(name => (name, idx)).toList
-      }
-      //toDf.flatMap(explodeCharactersArray);
-    }
 
     def dataframeAnalysis = {
       //START TF-IDF
@@ -135,7 +129,7 @@ object HelloWorld {
       tfidfs.select($"token" as ("character"), $"tf_idf")
         .groupBy("character")
         .agg(sum("tf_idf") as "tf_idf")
-        .sort($"tf_idf")
+        .sort(-$"tf_idf")
         .show()
 
       //tfidfs.show(10)
@@ -154,7 +148,7 @@ object HelloWorld {
         .select($"token" as ("character"), $"tf_idf_sent")
         .groupBy("character")
         .agg(sum("tf_idf_sent") as "overall goodness")
-        .sort($"overall goodness")
+        .sort(-$"overall goodness")
         .show()
     }
 
