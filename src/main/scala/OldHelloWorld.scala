@@ -58,7 +58,7 @@ object OldHelloWorld {
     val pipeline2 = PretrainedPipeline("analyze_sentiment", "en")
 
 
-    import io.circe.generic.auto._
+   /* import io.circe.generic.auto._
     import io.circe.parser
 
     //implicit val chapterDecoder = deriveDecoder[Chapter]
@@ -80,7 +80,7 @@ object OldHelloWorld {
           }
         )*/
       }
-    }
+    }*/
 
     def analyze(data: String, pip: PretrainedPipeline) = {
       val result = pip.annotate(data)

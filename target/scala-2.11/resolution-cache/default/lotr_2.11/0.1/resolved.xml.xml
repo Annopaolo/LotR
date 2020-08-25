@@ -4,7 +4,7 @@
 		module="lotr_2.11"
 		revision="0.1"
 		status="integration"
-		publication="20200421104011"
+		publication="20200825170629"
 	>
 		<description>
 		LotR
@@ -37,8 +37,5 @@
 		<dependency org="org.apache.spark" name="spark-core_2.11" rev="2.4.5" conf="compile->default(compile)"/>
 		<dependency org="com.johnsnowlabs.nlp" name="spark-nlp_2.11" rev="2.4.5" conf="compile->default(compile)"/>
 		<dependency org="org.apache.spark" name="spark-mllib_2.11" rev="2.4.5" conf="compile->default(compile)"/>
-		<dependency org="io.circe" name="circe-core_2.11" rev="0.7.0" conf="compile->default(compile)"/>
-		<dependency org="io.circe" name="circe-generic_2.11" rev="0.7.0" conf="compile->default(compile)"/>
-		<dependency org="io.circe" name="circe-parser_2.11" rev="0.7.0" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>

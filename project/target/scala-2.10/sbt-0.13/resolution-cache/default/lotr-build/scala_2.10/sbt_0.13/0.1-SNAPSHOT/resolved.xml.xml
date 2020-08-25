@@ -4,7 +4,7 @@
 		module="lotr-build"
 		revision="0.1-SNAPSHOT"
 		status="integration"
-		publication="20200822173628"
+		publication="20200825164038"
 		e:sbtVersion="0.13" e:scalaVersion="2.10"
 	>
 		<description>

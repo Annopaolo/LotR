@@ -10,6 +10,7 @@
 [debug] == resolving dependencies default#lotr$sbt_2.10;0.1->org.scala-sbt#sbt;0.13.18 [default->default(compile)]
 [info] Resolving org.scala-sbt#sbt;0.13.18 ...
 [debug] sbt-chain: Checking cache for: dependency: org.scala-sbt#sbt;0.13.18 {default=[default(compile)]}
+[debug] no default cache defined: set to /home/annopaolo/.ivy2/cache
 [debug] sbt-chain: module revision found in cache: org.scala-sbt#sbt;0.13.18
 [debug] 	found org.scala-sbt#sbt;0.13.18 in sbt-chain
 [debug] dependency descriptor has been mediated: dependency: org.scala-lang#scala-library;2.10.7 {compile=[default(compile)]} => dependency: org.scala-lang#scala-library;2.10.7 {compile=[default(compile)]}
@@ -795,7 +796,6 @@
 [debug] 	found org.scala-sbt#serialization_2.10;0.1.2 in sbt-chain
 [debug] == resolving dependencies org.scala-sbt#ivy;0.13.18->org.scala-sbt#serialization_2.10;0.1.2 [compile->runtime]
 [debug] == resolving dependencies org.scala-sbt#ivy;0.13.18->org.scala-sbt#serialization_2.10;0.1.2 [compile->compile]
-[debug] no default cache defined: set to /home/annopaolo/.ivy2/cache
 [debug] dependency descriptor has been mediated: dependency: org.scala-lang#scala-library;2.10.4 {compile=[compile(*), master(*)], runtime=[runtime(*)]} => dependency: org.scala-lang#scala-library;2.10.4 {compile=[compile(*), master(*)], runtime=[runtime(*)]}
 [debug] == resolving dependencies org.scala-sbt#serialization_2.10;0.1.2->org.scala-lang#scala-library;2.10.4 [compile->master(*)]
 [debug] dependency descriptor has been mediated: dependency: org.scala-lang#scala-library;2.10.4 {compile=[compile(*), master(*)], runtime=[runtime(*)]} => dependency: org.scala-lang#scala-library;2.10.4 {compile=[compile(*), master(*)], runtime=[runtime(*)]}
@@ -1779,9 +1779,9 @@
 [debug] 	[NOT REQUIRED] org.scala-sbt#test-interface;1.0!test-interface.jar
 [debug] 	[NOT REQUIRED] org.scala-sbt#apply-macro;0.13.18!apply-macro.jar
 [debug] 	[NOT REQUIRED] org.scala-sbt#template-resolver;0.1!template-resolver.jar
-[debug] :: resolution report :: resolve 590ms :: artifacts dl 12ms
+[debug] :: resolution report :: resolve 670ms :: artifacts dl 17ms
 [debug] 	report for default#lotr$sbt_2.10;0.1 default produced in /home/annopaolo/Scrivania/scala/LotR/target/scala-2.11/resolution-cache/reports/default-lotr$sbt_2.10-default.xml
-[debug] 	resolve done (590ms resolve - 12ms download)
+[debug] 	resolve done (670ms resolve - 17ms download)
 [debug] Using inline dependencies specified in Scala.
 [debug] :: resolving dependencies :: default#lotr$sources_2.10;0.1
 [debug] 	confs: [default]
@@ -2459,6 +2459,6 @@
 [debug] 	[NOT REQUIRED] com.jcraft#jsch;0.1.50!jsch.jar(src)
 [debug] 	[NOT REQUIRED] org.scala-sbt#classpath;0.13.18!classpath.jar(src)
 [debug] 	[NOT REQUIRED] org.scala-sbt#apply-macro;0.13.18!apply-macro.jar(src)
-[debug] :: resolution report :: resolve 136ms :: artifacts dl 12ms
+[debug] :: resolution report :: resolve 120ms :: artifacts dl 12ms
 [debug] 	report for default#lotr$sources_2.10;0.1 default produced in /home/annopaolo/Scrivania/scala/LotR/target/scala-2.11/resolution-cache/reports/default-lotr$sources_2.10-default.xml
-[debug] 	resolve done (136ms resolve - 12ms download)
+[debug] 	resolve done (120ms resolve - 12ms download)

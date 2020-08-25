@@ -7,7 +7,7 @@
 		revision="0.1"
 		conf="default"
 		confs="default"
-		date="20200819161740"/>
+		date="20200825170633"/>
 	<dependencies>
 		<module organisation="org.scala-sbt" name="sbt">
 			<revision name="0.13.18" status="release" pubdate="20181128083111" resolver="sbt-chain" artresolver="sbt-chain" downloaded="false" searched="false" default="false" conf="compile, default(compile)" position="3">
