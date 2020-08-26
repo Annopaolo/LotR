@@ -1,8 +1,11 @@
 //TODO: put names here or in a configuration file
-import HelloWorld.names
+import LotRAnalysis.names
 import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
 
 object Utils {
+
+  val bookPath = "src/main/resources/LordOfTheRingsBook.json"
+  val pipelinePath = "src/main/resources/analyze_sentiment_en_2.4.0_2.4_1580483464667"
 
   def sentToInt : String => Int =
   {
@@ -21,4 +24,5 @@ object Utils {
 
   def getSentimentPipeline =
     PretrainedPipeline.fromDisk("src/main/resources/analyze_sentiment_en_2.4.0_2.4_1580483464667");
+
 }

@@ -3,68 +3,16 @@ import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.functions._
 
 
-object HelloWorld {
+object DFAnalyzer extends  Analyzer {
 
-  val names = Seq(
-                  "Galadriel",
-                  "Bilbo",
-                  "Frodo",
-                  "Sam",
-                  "Gandalf",
-                  "Aragorn",
-                  "Legolas",
-                  "Gimli",
-                  "Gollum",
-                  "Bombadil",
-                  "Smeagol",
-                  "Sauron",
-                  "Saruman",
-                  "Merry",
-                  "Pippin",
-                  "Boromir",
-                  "Faramir",
-                  "Treebeard",
-                  "Elrond"
-  )
-
-  def main(args: Array[String]): Unit = {
-    val spark: SparkSession = SparkSession
-      .builder()
-      .appName("test")
-      .master("local[*]")
-      //.config("spark.driver.memory", "12G")
-      //.config("spark.kryoserializer.buffer.max", "200M")
-      //.config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-      .getOrCreate()
-
+  override def run(names: Seq[String], spark : SparkSession): Unit = {
+    val phr = BookDataRetriever.getData(Utils.bookPath,
+                                        Utils.pipelinePath,
+                                        spark)
     import spark.implicits._
     spark.sparkContext.setLogLevel("WARN")
 
-    val book = spark.read.option("multiline", "true").json("src/main/resources/LordOfTheRingsBook.json").cache();
-    //book.printSchema();
-    val phrases = book.select("ChapterData");
-    //val pipeline2 = PretrainedPipeline("analyze_sentiment", "en");
-    val pipeline2 = PretrainedPipeline.fromDisk("src/main/resources/analyze_sentiment_en_2.4.0_2.4_1580483464667");
-
-    val trans = pipeline2.annotate(phrases, "ChapterData");
-    //trans.show(10);
-    //trans.printSchema()
-
-    val arrs = trans.select(
-      col("sentiment.result").as("sentiment"),
-      col("sentence.result").as("sentence")
-      //, col("token.result").as("tokens")
-    );
-
-    val phr = arrs.
-      withColumn("r", explode(arrays_zip($"sentiment", $"sentence")))
-      .select(
-        $"r.sentiment" as("sentiment"),
-        $"r.sentence" as("sentence"))
-
     //phr.show(10)
-    //TODO: the user chooses which kind of analysis
-
     val udfSentToInt = udf(Utils.sentToInt)
 
     val end = phr.withColumn("#sent", udfSentToInt($"sentiment"))

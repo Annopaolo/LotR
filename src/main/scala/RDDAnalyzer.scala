@@ -1,61 +1,16 @@
-import com.johnsnowlabs.nlp.pretrained.PretrainedPipeline
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{arrays_zip, explode}
-
 import scala.collection.immutable.{Map => IMap}
 import scala.collection.mutable.Map
 
-object RDDAnalysis {
+object RDDAnalyzer extends  Analyzer {
 
-  val names = Seq(
-    "Galadriel",
-    "Bilbo",
-    "Frodo",
-    "Sam",
-    "Gandalf",
-    "Aragorn",
-    "Legolas",
-    "Gimli",
-    "Gollum",
-    "Bombadil",
-    "Smeagol",
-    "Sauron",
-    "Saruman",
-    "Merry",
-    "Pippin",
-    "Boromir",
-    "Faramir",
-    "Treebeard",
-    "Elrond"
-  )
-
-  def main(args: Array[String]): Unit = {
-    val spark: SparkSession = SparkSession.builder()
-                                .appName("test")
-                                .master("local[*]")
-                                .getOrCreate()
-
+  override def run(names: Seq[String], spark : SparkSession): Unit = {
     spark.sparkContext.setLogLevel("WARN")
 
-    import spark.implicits._
+    val data = BookDataRetriever.getData(Utils.bookPath, Utils.pipelinePath, spark)
 
-    val book = spark.read.option("multiline", "true").json("src/main/resources/LordOfTheRingsBook.json").cache();
-    val phrases = book.select("ChapterData");
-    val pipeline2 = Utils.getSentimentPipeline
-
-    val raw = pipeline2.annotate(phrases, "ChapterData").select(
-      $"sentiment.result".as("sentiment"),
-      $"sentence.result".as("sentence")
-    );
-
-    val data = raw.
-      withColumn("r", explode(arrays_zip($"sentiment", $"sentence")))
-      .select(
-        $"r.sentiment" as("sentiment"),
-        $"r.sentence" as("sentence"))
-
-    val base = data.rdd.map(r => (r.getString(0), r.getString(1)));
+    val base = data.rdd.map(r => (r.getString(0), r.getString(1)))
 
     val namesBroadcast = spark.sparkContext.broadcast(names);
 
