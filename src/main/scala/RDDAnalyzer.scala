@@ -67,7 +67,7 @@ object RDDAnalyzer extends  Analyzer {
       val tfAndDf = in.join(df) //May it be that tf and df are switched?
       val tfIdf = tfAndDf.map{case (name, (tf,df)) => (name, tf * Utils.calcIdf(docCount.value, df))}
       val sumUp = tfIdf.reduceByKey(_+_).sortBy(_._2)
-      sumUp.foreach(x => println(s"${x._1}, ${x._2}"))
+      sumUp.foreach(x => println(f"${x._1}%s :  ${x._2}%.4f"))
     }
 
     val freqs = tf.map{case (_, (name, freq)) => (name, freq)}

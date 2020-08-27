@@ -1,7 +1,7 @@
 object Utils {
 
-  val bookPath = "src/main/resources/LordOfTheRingsBook.json"
-  val pipelinePath = "src/main/resources/analyze_sentiment_en_2.4.0_2.4_1580483464667"
+  val bookPath = "/home/annopaolo/Scrivania/scala/LotR/src/main/resources/LordOfTheRingsBook.json"
+  val pipelinePath = "/home/annopaolo/Scrivania/scala/LotR/src/main/resources/analyze_sentiment_en_2.4.0_2.4_1580483464667"
 
   val names = Seq(
     "Galadriel",
