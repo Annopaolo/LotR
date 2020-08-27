@@ -6,22 +6,21 @@ import org.apache.spark.sql.functions._
 object DFAnalyzer extends  Analyzer {
 
   override def run(names: Seq[String], spark : SparkSession): Unit = {
-    val phr = BookDataRetriever.getData(Utils.bookPath,
+    val data = BookDataRetriever.getData(Utils.bookPath,
                                         Utils.pipelinePath,
                                         spark)
     import spark.implicits._
-    spark.sparkContext.setLogLevel("WARN")
 
-    //phr.show(10)
+    //data.show(10)
     val udfSentToInt = udf(Utils.sentToInt)
 
-    val end = phr.withColumn("#sent", udfSentToInt($"sentiment"))
+    val phraseAndSentInt = data.withColumn("#sent", udfSentToInt($"sentiment"))
       .select($"#sent" as("sentiment"), $"sentence");
-    //end.show(10);
+    //phraseAndSentInt.show(10);
 
     val wordList = udf(Utils.wordList);
 
-    val sentPlusList = end.withColumn("words", wordList($"sentence"))
+    val sentPlusList = phraseAndSentInt.withColumn("words", wordList($"sentence"))
       .select($"words" as("characters"), $"sentiment")
       .filter(size($"characters") > 0);
 
@@ -35,42 +34,44 @@ object DFAnalyzer extends  Analyzer {
 
       val unfoldedDocs = documents.select(columns: _*).cache();
 
-      val tokensWithTf =
+      val wordsWithTf =
         unfoldedDocs
           .groupBy("id", "token")
           .agg(count("characters") as "tf");
 
-      println(" Frodo words: " + tokensWithTf.select($"token", $"tf").where($"token" like("Frodo")).agg(sum($"tf")).first().get(0));
+/*
+      println(" Frodo words: " + wordsWithTf.select($"token", $"tf").where($"token" like("Frodo")).agg(sum($"tf")).first().get(0));
+*/
 
       //look for an ID on a column: regex ((\|([\s])+ID\|) [\s]+)
 
       //IDF
-      val tokensWithDf =
+      val wordsWithDf =
         unfoldedDocs
           .groupBy("token")
           .agg(countDistinct("id") as "df")
 
-      tokensWithDf.show(truncate = false);
+      wordsWithDf.show(truncate = false);
 
-      val dNorm = documents.count().toInt
-      println(s"${dNorm} documents");
+      val docCount = documents.count().toInt
+      println(s"${docCount} documents");
 
-      val calcIdfUdf = udf { df: Long => Utils.calcIdf(dNorm, df toDouble) }
+      val calcIdfUdf = udf { df: Long => Utils.calcIdf(docCount, df toDouble) }
 
-      val withIdf = tokensWithDf.withColumn("idf", calcIdfUdf(col("df")))
+      val withIdf = wordsWithDf.withColumn("idf", calcIdfUdf(col("df")))
       //withIdf.show(10)
 
 
-      println("Frodo words * sent: "+  tokensWithTf
+/*      println("Frodo words * sent: "+  wordsWithTf
         .join(documents, Seq("id"))
         .withColumn("tf_sent", $"tf" * $"sentiment")
         .select($"token", $"tf_sent")
         .where($"token" like("Frodo"))
-        .agg(sum($"tf_sent")).first().get(0))
+        .agg(sum($"tf_sent")).first().get(0))*/
 
 
       //TF+IDF
-      val tfidfs = tokensWithTf
+      val tfidfs = wordsWithTf
         .join(withIdf, Seq("token")/*, "left"*/)
         .withColumn("tf_idf", $"tf" * $"idf")
 

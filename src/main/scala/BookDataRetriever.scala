@@ -7,7 +7,6 @@ object BookDataRetriever {
     def getData(bookPath : String, pipelinePath : String, spark : SparkSession): DataFrame ={
 
       import spark.implicits._
-      spark.sparkContext.setLogLevel("WARN")
 
       val book = spark.read.option("multiline", "true").json(bookPath).cache()
       //book.printSchema()

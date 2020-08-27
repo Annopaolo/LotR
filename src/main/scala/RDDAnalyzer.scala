@@ -6,7 +6,6 @@ import scala.collection.mutable.Map
 object RDDAnalyzer extends  Analyzer {
 
   override def run(names: Seq[String], spark : SparkSession): Unit = {
-    spark.sparkContext.setLogLevel("WARN")
 
     val data = BookDataRetriever.getData(Utils.bookPath, Utils.pipelinePath, spark)
 
@@ -35,11 +34,11 @@ object RDDAnalyzer extends  Analyzer {
                     }
                     //(id, (sent, [names])
 
-    val docs = rddForTf.count().toInt //TODO: use the actual document number
+    val docs = rddForTf.count().toInt //TODO: use the actual document number?
     val docCount = spark.sparkContext.broadcast(docs)
     println(s"There are ${docCount.value} documents to be considered.")
 
-    println(s"----------------DF-----------------------")
+    //println(s"----------------DF-----------------------")
     val rddForDf = IdAndSentWord.map(x => (x._1, x._2._2));
     val df = rddForDf.map(x => (x._2, x._1))
                       .distinct()
@@ -48,7 +47,7 @@ object RDDAnalyzer extends  Analyzer {
 /*                      .map{case (name, _) => ((name,1))}
                       .reduceByKey(_+_)*/
                       //(name, df)
-    df.sortBy(x => x._2).take(namesBroadcast.value.length).foreach(x => println(s"${x._1}, ${x._2}"))
+    //df.sortBy(x => x._2).take(namesBroadcast.value.length).foreach(x => println(s"${x._1}, ${x._2}"))
 
     //TODO: try if it's better to keep indexes and join with sentiment  -- it is not! Join costs more
     val namesMapInSentence = rddForTf.map{case (i,(sent, names)) => (i, (sent, listToMap(names) toSeq))}
