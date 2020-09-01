@@ -64,8 +64,7 @@ object RDDAnalyzer extends  Analyzer {
     //(sent, (namei,tfi))
     //tf.take(10).foreach(x => println(s"sent: ${x._1}, occurrences: ${x._2}"))
 
-    def computeResult(in: RDD[(String, Int)], computationName: String): Array[(String, Double)] = {
-      println(s"-----------$computationName--------------")
+    def computeResult(in: RDD[(String, Int)]): Array[(String, Double)] = {
       val tfAndDf = in.join(df)
       val tfIdf = tfAndDf.map { case (name, (tf, df)) => (name, tf * Utils.calcIdf(docCount.value, df)) }
       val sumUp = tfIdf.reduceByKey(_ + _).sortBy(_._2)
@@ -73,35 +72,31 @@ object RDDAnalyzer extends  Analyzer {
       sumUp.collect(); //collectAsync + OnComplete?
     }
 
-    val freqs = tf.map { case (_, (name, freq)) => (name, freq) }
-    //(namei,tfi)
-    val tfidf = computeResult(freqs, "simple tf-idf")
-
-    def fastComputeResult(in: RDD[(String, Int)], computationName: String): Array[(String, Double)] = {
-      println(s"-----------$computationName--------------")
-
+    def fastComputeResult(in: RDD[(String, Int)]): Array[(String, Double)] = {
       def addSeqToAcc(acc: Double, seq: Seq[Double]) : Double = seq.reduce(_+_)
 
       in.cogroup(df)
         .map {
-        case (name, (tfCount, dfCount)) => {
-          val idf = Utils.calcIdf(docCount.value, dfCount.head)
-          val tfIdfForEachSentence = tfCount.map(_ * idf)
-          (name, tfIdfForEachSentence toSeq)
+          case (name, (tfCount, dfCount)) => {
+            val idf = Utils.calcIdf(docCount.value, dfCount.head)
+            val tfIdfForEachSentence = tfCount.map(_ * idf)
+            (name, tfIdfForEachSentence toSeq)
           }
         }
         .aggregateByKey(0.0)(addSeqToAcc, _ + _)
         .collect()
     }
 
-    //fastComputeResult(freqs, "fast tfidf").sortBy(_._2)foreach(println)
+    val freqs = tf.map { case (_, (name, freq)) => (name, freq) }
+    //(namei,tfi)
+    val tfidf = fastComputeResult(freqs)
 
-        val tfPlusSent = tf.map{case (sent, (name, freq)) => (name, sent * freq)}
-        //(namei,tfi*sent)
-        val tfIdfSent = computeResult(tfPlusSent, "tf-idf + sentiment")
+    val tfPlusSent = tf.map{case (sent, (name, freq)) => (name, sent * freq)}
+    //(namei,tfi*sent)
+    val tfIdfSent = fastComputeResult(tfPlusSent)
 
-        (tfidf, tfIdfSent)
-    }
+    (tfidf, tfIdfSent)
+  }
   //}
 
   def listToMap (a:Seq[String]) : IMap[String, Int] = {

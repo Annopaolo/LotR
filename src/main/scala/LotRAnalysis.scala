@@ -24,6 +24,6 @@ object LotRAnalysis {
 
   def prettyPrint(in : Array[(String, Double)], name : String) : Unit = {
     println(s"-----------$name---------------")
-    in.foreach(x => println(f"${x._1}%s : ${x._2}%.4f"))
+    in.sortBy(_._2)foreach(x => println(f"${x._1}%s : ${x._2}%.4f"))
   }
 }
