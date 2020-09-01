@@ -5,7 +5,7 @@ import org.apache.spark.sql.functions._
 
 object DFAnalyzer extends  Analyzer {
 
-  override def run(names: Seq[String], spark : SparkSession): Unit = {
+  override def run(names: Seq[String], spark : SparkSession) = {
     val data = BookDataRetriever.getData(Utils.bookPath,
                                         Utils.pipelinePath,
                                         spark)
@@ -75,30 +75,33 @@ object DFAnalyzer extends  Analyzer {
         .join(withIdf, Seq("token")/*, "left"*/)
         .withColumn("tf_idf", $"tf" * $"idf")
 
-      tfidfs.select($"token" as ("character"), $"tf_idf")
+      val tfidf = tfidfs.select($"token" as ("character"), $"tf_idf")
         .groupBy("character")
         .agg(sum("tf_idf") as "tf_idf")
         .sort(-$"tf_idf")
-        .show()
+        .collect()
+        .map(r => (r.getString(0), r.getDouble(1)))
 
       //tfidfs.show(10)
 
       //TFIDF*SENTIMENT
-
       val temp = tfidfs
         .join(documents, Seq("id")/*, "left"*/)
-        //TODO: check if jointType = left is ok
+        //TODO: check if jointType = left is ok -- no, inner join (no option on both sides) is better
         .withColumn("tf_idf_sent", $"tf_idf" * $"sentiment")
 
       //temp.show(10)
 
       //SUM UP
-      temp
+      val tfidfsent = temp
         .select($"token" as ("character"), $"tf_idf_sent")
         .groupBy("character")
         .agg(sum("tf_idf_sent") as "overall goodness")
         .sort(-$"overall goodness")
-        .show()
+        .collect()
+        .map(r => (r.getString(0), r.getDouble(1)))
+
+      (tfidf, tfidfsent)
     }
 
     dataframeAnalysis
