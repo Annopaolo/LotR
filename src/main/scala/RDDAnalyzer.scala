@@ -1,5 +1,7 @@
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.storage.StorageLevel
+
 import scala.collection.immutable.{Map => IMap}
 import scala.collection.mutable.Map
 
@@ -9,9 +11,14 @@ object RDDAnalyzer extends  Analyzer {
 
     val data = BookDataRetriever.getData(Utils.bookPath, Utils.pipelinePath, spark)
 
-    val base = data.rdd.map(r => (r.getString(0), r.getString(1)))
+    val docs = data.count().toInt
+    val docCount = spark.sparkContext.broadcast(docs)
+    println(s"There are ${docCount.value} documents to be considered.")
 
-    val namesBroadcast = spark.sparkContext.broadcast(names);
+    val base = data.rdd.map(r => (r.getString(0), r.getString(1))).cache()
+    //base.count()
+
+    val namesBroadcast = spark.sparkContext.broadcast(names)
 
     val sentWordAndId = base.zipWithUniqueId()
       .flatMap { case ((sentiment, sentence), id) =>
@@ -35,9 +42,6 @@ object RDDAnalyzer extends  Analyzer {
       }
     //(id, (sent, [names])
 
-    val docs = rddForTf.count().toInt //TODO: use the actual document number?
-    val docCount = spark.sparkContext.broadcast(docs)
-    println(s"There are ${docCount.value} documents to be considered.")
 
     //println(s"----------------DF-----------------------")
     val rddForDf = IdAndSentWord.map(x => (x._1, x._2._2));

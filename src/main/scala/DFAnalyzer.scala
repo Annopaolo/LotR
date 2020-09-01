@@ -6,10 +6,13 @@ import org.apache.spark.sql.functions._
 object DFAnalyzer extends  Analyzer {
 
   override def run(names: Seq[String], spark : SparkSession) = {
+    import spark.implicits._
+
     val data = BookDataRetriever.getData(Utils.bookPath,
                                         Utils.pipelinePath,
                                         spark)
-    import spark.implicits._
+    val docCount = data.count().toInt
+    println(s"${docCount} documents");
 
     //data.show(10)
     val udfSentToInt = udf(Utils.sentToInt)
@@ -51,10 +54,7 @@ object DFAnalyzer extends  Analyzer {
           .groupBy("token")
           .agg(countDistinct("id") as "df")
 
-      wordsWithDf.show(truncate = false);
-
-      val docCount = documents.count().toInt
-      println(s"${docCount} documents");
+      //wordsWithDf.show(truncate = false);
 
       val calcIdfUdf = udf { df: Long => Utils.calcIdf(docCount, df toDouble) }
 
