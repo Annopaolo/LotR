@@ -12,7 +12,7 @@ object DFAnalyzer extends  Analyzer {
                                         Utils.pipelinePath,
                                         spark)
     val docCount = data.count().toInt
-    println(s"${docCount} documents");
+    println(s"There are ${docCount} documents to be considered.")
 
     //data.show(10)
     val udfSentToInt = udf(Utils.sentToInt)
