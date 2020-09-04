@@ -24,6 +24,7 @@ and 2 core nodes. Relevant files, such as the book and the sentiment pipeline
 were stored in an S3 bucket. 
 
 ##Running the project
+
 To build the project, use:
 ```
 sbt package
