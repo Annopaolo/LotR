@@ -26,6 +26,7 @@ were stored in an S3 bucket.
 
 ## Running the project
 
+The project relies on Scala 2.11, sbt 0.13 and Spark 2.4.5.
 To build the project, use:
 ```
 sbt package
