@@ -29,7 +29,7 @@ object RDDAnalyzer extends  Analyzer {
     //(id, (sent, name))
 
     val rddForTf = IdAndSentWord
-      .groupByKey() //HERE! -- too difficult?
+      .groupByKey() //too difficult?
       .map { case (id, other) =>
         (id, (other.head._1, other.map(
           e => e._2
