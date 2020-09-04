@@ -1,7 +1,5 @@
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.storage.StorageLevel
-
 import scala.collection.immutable.{Map => IMap}
 import scala.collection.mutable.Map
 
@@ -40,15 +38,15 @@ object RDDAnalyzer extends  Analyzer {
       }
     //(id, (sent, [names])
     
-    val rddForDf = IdAndSentWord.map(x => (x._1, x._2._2));
+    val rddForDf = IdAndSentWord.map(x => (x._1, x._2._2))
     val df = rddForDf.map(x => (x._2, x._1))
       .distinct()
-      .groupByKey() //HERE!
+      .groupByKey()
       .map(x => (x._1, x._2.size))
-    /*                      .map{case (name, _) => ((name,1))}
+    /*                 .map{case (name, _) => ((name,1))}
                       .reduceByKey(_+_)*/
     //(name, df)
-    //TODO: try if it's better to keep indexes and join with sentiment  -- it is not! Join costs more
+    //Join costs more
     val namesMapInSentence = rddForTf.map { case (i, (sent, names)) => (i, (sent, listToMap(names) toSeq)) }
     //(id,(sent, [(namei,tfi)])
     
@@ -72,7 +70,7 @@ object RDDAnalyzer extends  Analyzer {
             (name, tfIdfForEachSentence toSeq)
           }
         }
-        .aggregateByKey(0.0)(addSeqToAcc, _ + _)
+        .aggregateByKey(0.0)(addSeqToAcc, _+_)
         .collect()
     }
 
@@ -86,21 +84,19 @@ object RDDAnalyzer extends  Analyzer {
 
     (tfidf, tfIdfSent)
   }
-  //}
 
   def listToMap (a:Seq[String]) : IMap[String, Int] = {
+    def listToMapHelper (a:Seq[String], acc: Map[String, Int]) : Map[String, Int] = {
+      a.foldRight(acc) ((current:String, acc:Map[String, Int]) => {
+        if (acc.contains(current)) {
+          acc.update(current, acc(current) + 1)
+          acc
+        }
+        else
+          acc + (current -> 1)
+      })
+    }
     listToMapHelper(a, Map.empty[String,Int]).toMap
-  }
-
-  def listToMapHelper (a:Seq[String], acc: Map[String, Int]) : Map[String, Int] = {
-    a.foldRight(acc) ((current:String, acc:Map[String, Int]) => {
-      if (acc.contains(current)) {
-        acc.update(current, acc(current) + 1)
-        acc
-      }
-      else
-        acc + (current -> 1)
-    })
   }
 
 }
