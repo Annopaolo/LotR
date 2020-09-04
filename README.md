@@ -5,7 +5,8 @@ course @ University of Bologna.
 The goal is to classify a selection of characters from J.R.R. Tolkien's "Lord of the Rings"
 using a simple combination of sentiment analysis and tf-idf.
 
-##Description
+## Description
+
 Sentiment analysis is performed using [Spark-NLP](https://github.com/JohnSnowLabs/spark-nlp)
 and tf-idf is actually programmed. In order to double-check the result, it is possible to run
 the analysis using Spark DataFrames or Spark RDDs. The latter is a bit faster and more in the
@@ -23,7 +24,7 @@ The project was deployed on AWS EMR using a m4.xlarge cluster with 1 master
 and 2 core nodes. Relevant files, such as the book and the sentiment pipeline
 were stored in an S3 bucket. 
 
-##Running the project
+## Running the project
 
 To build the project, use:
 ```
