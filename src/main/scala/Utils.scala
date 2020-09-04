@@ -1,6 +1,6 @@
 object Utils {
 
-  var bookPath = "/home/annopaolo/Scrivania/scala/LotR/src/main/resources/LordOfTheRingsBook.json"
+  var bookPath = "/home/annopaolo/Scrivania/scala/LotR/src/main/resources/LotrBook.parquet"
   var pipelinePath = "/home/annopaolo/Scrivania/scala/LotR/src/main/resources/analyze_sentiment_en_2.4.0_2.4_1580483464667"
 
   val names = Seq(
@@ -40,8 +40,8 @@ object Utils {
   def calcIdf(docCount : Int, df : Double) =
     Math.log((docCount + 1)/df + 1)
 
-  def setResourceLocation(bookPath : String, pipelinePath : String) : Unit ={
-    this.bookPath = bookPath;
-    this.pipelinePath = pipelinePath;
+  def setResourcesLocation(bookPath : String, pipelinePath : String) : Unit ={
+    this.bookPath = bookPath
+    this.pipelinePath = pipelinePath
   }
 }

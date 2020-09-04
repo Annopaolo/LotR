@@ -5,23 +5,18 @@ import org.apache.spark.sql.functions.{arrays_zip, col, explode}
 object BookDataRetriever {
 
     def getData(bookPath : String, pipelinePath : String, spark : SparkSession): DataFrame ={
-
       import spark.implicits._
 
-      val book = spark.read.option("multiline", "true").json(bookPath).cache()
-      //book.printSchema()
+      //val book = spark.read.option("multiline", "true").json(bookPath).cache()
+      val book = spark.read.parquet(bookPath).cache()
       val phrases = book.select("ChapterData")
       //val pipeline2 = PretrainedPipeline("analyze_sentiment", "en")
       val pipeline2 = PretrainedPipeline.fromDisk(pipelinePath)
 
       val annotation = pipeline2.annotate(phrases, "ChapterData")
-      //trans.show(10);
-      //trans.printSchema()
-
       val columns = annotation.select(
         col("sentiment.result").as("sentiment"),
         col("sentence.result").as("sentence")
-        //, col("token.result").as("tokens")
       )
 
       columns.
@@ -29,7 +24,6 @@ object BookDataRetriever {
         .select(
           $"r.sentiment" as "sentiment",
           $"r.sentence" as "sentence")
-
     }
 
 }
