@@ -48,23 +48,22 @@ object DFAnalyzer extends Analyzer {
         in.select($"token" as ("character"), col(selectedColumn))
           .groupBy("character")
           .agg(sum(col(selectedColumn)) as computationName)
-          .sort(-col(computationName))
           .collect()
           .map(r => (r.getString(0), r.getDouble(1)))
       }
 
       //TF+IDF
-      val tfidfs = wordsWithTf
+      val dfForTfIdf= wordsWithTf
         .join(withIdf, Seq("token")/*, "left"*/)
         .withColumn("tf_idf", $"tf" * $"idf")
-      val tfidf = computeResult(tfidfs, "tf_idf", "tf-idf")
+      val tfidf = computeResult(dfForTfIdf, "tf_idf", "tf-idf")
 
       //TFIDF*SENTIMENT
-      val temp = tfidfs
+      val dfForTFIdfSent = dfForTfIdf
         .join(documents, Seq("id")/*, "left"*/)
         //inner join is better
         .withColumn("tf_idf_sent", $"tf_idf" * $"sentiment")
-      val tfidfsent = computeResult(temp, "tf_idf_sent", "tf-idf * sentiment")
+      val tfidfsent = computeResult(dfForTFIdfSent, "tf_idf_sent", "tf-idf * sentiment")
 
       (tfidf, tfidfsent)
     }

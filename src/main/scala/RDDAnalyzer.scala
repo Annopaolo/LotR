@@ -12,7 +12,7 @@ object RDDAnalyzer extends  Analyzer {
     val docCount = spark.sparkContext.broadcast(docs)
     println(s"There are ${docCount.value} documents to be considered.")
 
-    val base = data.rdd.map(r => (r.getString(0), r.getString(1))).cache()
+    val base = data.rdd.map(r => (r.getString(0), r.getString(1)))
 
     val namesBroadcast = spark.sparkContext.broadcast(names)
 
@@ -25,64 +25,69 @@ object RDDAnalyzer extends  Analyzer {
       .filter { case ((_, word), _) => namesBroadcast.value contains word }
     //((sent, name), id)
 
-    val IdAndSentWord = sentWordAndId.map(x => (x._2, x._1)).cache()
-    //(id, (sent, name))
+    def rddAnalysis = {
+      val IdAndSentWord = sentWordAndId.map(x => (x._2, x._1)).cache()
+      //(id, (sent, name))
 
-    val rddForTf = IdAndSentWord
-      .groupByKey() //too difficult?
-      .map { case (id, other) =>
-        (id, (other.head._1, other.map(
-          e => e._2
-        )
-          toList))
-      }
-    //(id, (sent, [names])
-    
-    val rddForDf = IdAndSentWord.map(x => (x._1, x._2._2))
-    val df = rddForDf.map(x => (x._2, x._1))
-      .distinct()
-      .groupByKey()
-      .map(x => (x._1, x._2.size))
-    /*                 .map{case (name, _) => ((name,1))}
-                      .reduceByKey(_+_)*/
-    //(name, df)
-    //Join costs more
-    val namesMapInSentence = rddForTf.map { case (i, (sent, names)) => (i, (sent, listToMap(names) toSeq)) }
-    //(id,(sent, [(namei,tfi)])
-    
-    val tf = namesMapInSentence
-      .map { x => x._2 }
-      .flatMap {
-        case (sent, vals) =>
-          vals.map(e => (sent, e))
-      }
-      .cache()
-    //(sent, (namei,tfi))
-    
-    def computeResult(in: RDD[(String, Int)]): Array[(String, Double)] = {
-      def addSeqToAcc(acc: Double, seq: Seq[Double]) : Double = seq.reduce(_+_)
-
-      in.cogroup(df)
-        .map {
-          case (name, (tfCount, dfCount)) => {
-            val idf = Utils.calcIdf(docCount.value, dfCount.head)
-            val tfIdfForEachSentence = tfCount.map(_ * idf)
-            (name, tfIdfForEachSentence toSeq)
-          }
+      val rddForTf = IdAndSentWord
+        .groupByKey() //too difficult?
+        .map { case (id, other) =>
+          (id, (other.head._1, other.map(
+            e => e._2
+          )
+            toList))
         }
-        .aggregateByKey(0.0)(addSeqToAcc, _+_)
-        .collect()
+      //(id, (sent, [names])
+
+      val rddForDf = IdAndSentWord.mapValues(x => x._2)
+      val df = rddForDf.map(x => (x._2, x._1))
+        .distinct()
+        .groupByKey()
+        .map(x => (x._1, x._2.size))
+      /*                 .map{case (name, _) => ((name,1))}
+                      .reduceByKey(_+_)*/
+        .cache()
+      //(name, df)
+      //Join costs more
+      val namesMapInSentence = rddForTf.mapValues{ case (sent, names) => (sent, listToMap(names) toSeq) }
+      //(id,(sent, [(namei,tfi)])
+
+      val tf = namesMapInSentence
+        .map { x => x._2 }
+        .flatMap {
+          case (sent, vals) =>
+            vals.map(e => (sent, e))
+        }
+        .cache()
+      //(sent, (namei,tfi))
+
+      def computeResult(in: RDD[(String, Int)]): Array[(String, Double)] = {
+        def addSeqToAcc(acc: Double, seq: Seq[Double]): Double = seq.reduce(_ + _)
+
+        in.cogroup(df)
+          .mapValues {
+            case (tfCount, dfCount) => {
+              val idf = Utils.calcIdf(docCount.value, dfCount.head)
+              val tfIdfForEachSentence = tfCount.map(_ * idf)
+              tfIdfForEachSentence toSeq
+            }
+          }
+          .aggregateByKey(0.0)(addSeqToAcc, _ + _)
+          .collect()
+      }
+
+      val freqs = tf.map { case (_, (name, freq)) => (name, freq) }
+      //(namei,tfi)
+      val tfidf = computeResult(freqs)
+
+      val tfPlusSent = tf.map { case (sent, (name, freq)) => (name, sent * freq) }
+      //(namei,tfi*sent)
+      val tfIdfSent = computeResult(tfPlusSent)
+
+      (tfidf, tfIdfSent)
     }
 
-    val freqs = tf.map { case (_, (name, freq)) => (name, freq) }
-    //(namei,tfi)
-    val tfidf = computeResult(freqs)
-
-    val tfPlusSent = tf.map{case (sent, (name, freq)) => (name, sent * freq)}
-    //(namei,tfi*sent)
-    val tfIdfSent = computeResult(tfPlusSent)
-
-    (tfidf, tfIdfSent)
+    rddAnalysis
   }
 
   def listToMap (a:Seq[String]) : IMap[String, Int] = {
