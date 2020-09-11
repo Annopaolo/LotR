@@ -5,7 +5,7 @@ object LotRAnalysis {
 
   val spark: SparkSession = SparkSession.builder()
     .appName("LotRAnalysis")
-    .master("local[*]")
+    //.master("local[*]")
     .getOrCreate()
 
   def main(args: Array[String]): Unit = {
